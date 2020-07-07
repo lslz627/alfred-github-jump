@@ -2,3 +2,5 @@
 alfred-github-jump
 sqlite.db
 *.alfredworkflow
+
+.idea

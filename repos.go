@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -21,6 +22,10 @@ type Repository struct {
 
 func (r Repository) FullName() string {
 	return fmt.Sprintf("%s/%s", r.User, r.Name)
+}
+
+func (r Repository) FuzzyFilter() string {
+	return fmt.Sprintf("%s/%s %s", r.User, r.Name, r.Description)
 }
 
 func reposCommand(fuzzyFilter string) {
@@ -45,10 +50,13 @@ func reposCommand(fuzzyFilter string) {
 	var names []string
 
 	for _, repo := range repos {
-		names = append(names, repo.FullName())
+		names = append(names, repo.FuzzyFilter())
 	}
 
-	for _, match := range fuzzy.Find(fuzzyFilter, names) {
+	matches := fuzzy.Find(fuzzyFilter, names)
+	sort.Sort(matches)
+
+	for _, match := range matches {
 		response.AddItem(&alfred.AlfredResponseItem{
 			Valid:    true,
 			Uid:      repos[match.Index].URL,
@@ -206,6 +214,7 @@ func UpdateRepositories(token *oauth2.Token) (int64, error) {
 			githubTime(repo.UpdatedAt),
 			githubTime(repo.CreatedAt),
 		)
+
 		if err != nil {
 			return counter, err
 		}
